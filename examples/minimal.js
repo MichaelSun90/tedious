@@ -2,27 +2,19 @@ var Connection = require('../lib/tedious').Connection;
 var Request = require('../lib/tedious').Request;
 
 var config = {
-  server: '192.168.1.212',
-  authentication: {
-    type: 'default',
-    options: {
-      userName: 'test',
-      password: 'test'
-    }
-  }
-  /*
-  ,options: {
-    debug: {
-      packet: true,
-      data: true,
-      payload: true,
-      token: false,
-      log: true
-    },
-    database: 'DBName',
-    encrypt: true // for Azure users
-  }
-  */
+      "server": "localhost",
+      "authentication": {
+          "type": "default",
+          "options": {
+              "userName": "sa",
+              "password": "Password_123"
+          }
+      },
+      "options": {
+          "port": 60543,
+          "database": "EmpData3"
+      }
+
 };
 
 var connection = new Connection(config);
@@ -39,7 +31,12 @@ connection.on('debug', function(text) {
 );
 
 function executeStatement() {
-  request = new Request("select 42, 'hello world'", function(err, rowCount) {
+  request = new Request(`
+  SELECT column_encryption_key_id ColumnKeyID,
+    column_master_key_id MasterKeyID,
+    encrypted_value EncryptValue,
+    encryption_algorithm_name EncryptAlgorithm
+  FROM sys.column_encryption_key_values;`, function(err, rowCount) {
     if (err) {
       console.log(err);
     } else {
@@ -54,7 +51,7 @@ function executeStatement() {
       if (column.value === null) {
         console.log('NULL');
       } else {
-        console.log(column.value);
+        console.log(column);
       }
     });
   });
