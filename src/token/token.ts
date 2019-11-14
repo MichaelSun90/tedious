@@ -273,11 +273,13 @@ export class RoutingEnvChangeToken extends Token {
 
 export class FeatureExtAckToken extends Token {
   fedAuth: Buffer | undefined;
+  colEncryption: Buffer | undefined;
 
-  constructor(fedAuth: Buffer | undefined) {
+  constructor(fedAuth: Buffer | undefined, colEncryption: Buffer | undefined) {
     super('FEATUREEXTACK', 'featureExtAck');
 
     this.fedAuth = fedAuth;
+    this.colEncryption = colEncryption;
   }
 }
 
