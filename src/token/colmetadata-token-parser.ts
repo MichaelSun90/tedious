@@ -4,9 +4,24 @@ import Parser from './stream-parser';
 import { InternalConnectionOptions } from '../connection';
 import { ColMetadataToken } from './token';
 
+type CryptoMetaData = {
+  ordinal: any,
+  userType: any,
+  baseTypeInfo: any,
+  encryptionAlgo: any,
+  algoName?: string,
+  encryptionAlgoType: any,
+  normVersion: any
+}
+
+type CekTableMetadata = {
+
+}
+
 export type ColumnMetadata = Metadata & {
   colName: string,
-  tableName?: string | string[]
+  tableName?: string | string[],
+  cryptoMetaData: CryptoMetaData
 };
 
 function readTableName(parser: Parser, options: InternalConnectionOptions, metadata: Metadata, callback: (tableName?: string | string[]) => void) {
@@ -47,7 +62,7 @@ function readColumnName(parser: Parser, options: InternalConnectionOptions, inde
     if (options.columnNameReplacer) {
       callback(options.columnNameReplacer(colName, index, metadata));
     } else if (options.camelCaseColumns) {
-      callback(colName.replace(/^[A-Z]/, function(s) {
+      callback(colName.replace(/^[A-Z]/, function (s) {
         return s.toLowerCase();
       }));
     } else {
@@ -56,29 +71,37 @@ function readColumnName(parser: Parser, options: InternalConnectionOptions, inde
   });
 }
 
-function readColumn(parser: Parser, options: InternalConnectionOptions, index: number, callback: (column: ColumnMetadata) => void) {
+function readCryptoMetaData(parser: Parser, options: InternalConnectionOptions, index: number, metadata: Metadata, callback: (cryptoMetaData: CryptoMetaData) => void) {
+  //TODO
+}
+
+// 2.2.7.4 Token Stream Definition Parser -> 'ColumnData'
+function readColumnData(parser: Parser, options: InternalConnectionOptions, index: number, callback: (column: ColumnMetadata) => void) {
   metadataParse(parser, options, (metadata) => {
     readTableName(parser, options, metadata, (tableName) => {
-      readColumnName(parser, options, index, metadata, (colName) => {
-        callback({
-          userType: metadata.userType,
-          flags: metadata.flags,
-          type: metadata.type,
-          collation: metadata.collation,
-          precision: metadata.precision,
-          scale: metadata.scale,
-          udtInfo: metadata.udtInfo,
-          dataLength: metadata.dataLength,
-          schema: metadata.schema,
-          colName: colName,
-          tableName: tableName
+      readCryptoMetaData(parser, options, index, metadata, (cryptoMetaData) => {
+        readColumnName(parser, options, index, metadata, (colName) => {
+          callback({
+            userType: metadata.userType,
+            flags: metadata.flags,
+            type: metadata.type,
+            collation: metadata.collation,
+            precision: metadata.precision,
+            scale: metadata.scale,
+            udtInfo: metadata.udtInfo,
+            dataLength: metadata.dataLength,
+            schema: metadata.schema,
+            colName: colName,
+            tableName: tableName,
+            cryptoMetaData: cryptoMetaData
+          });
         });
-      });
+      })
     });
   });
 }
 
-function colMetadataParser(parser: Parser, _colMetadata: ColumnMetadata[], options: InternalConnectionOptions, callback: (token: ColMetadataToken) => void) {
+function readColumns(parser: Parser,  options: InternalConnectionOptions, callback: (token: ColMetadataToken) => void){
   parser.readUInt16LE((columnCount) => {
     const columns: ColumnMetadata[] = [];
 
@@ -88,7 +111,7 @@ function colMetadataParser(parser: Parser, _colMetadata: ColumnMetadata[], optio
         return done();
       }
 
-      readColumn(parser, options, i, (column) => {
+      readColumnData(parser, options, i, (column) => {
         columns.push(column);
 
         i++;
@@ -100,6 +123,28 @@ function colMetadataParser(parser: Parser, _colMetadata: ColumnMetadata[], optio
       callback(new ColMetadataToken(columns));
     });
   });
+}
+
+// 2.2.7.4 Token Stream Definition Parser -> 'CekTable'
+function readCekTable(parser: Parser, callback: (cekTable: CekTableMetadata) => void) {
+  //TODO
+}
+
+
+// 2.2.7.4 Token Stream Definition Parser
+function colMetadataParser(parser: Parser, _colMetadata: ColumnMetadata[], options: InternalConnectionOptions, callback: (token: ColMetadataToken) => void) {
+  let columnCount: number;
+  let cekTableMetadata: CekTableMetadata;
+
+  parser.readUInt16LE((count) => {
+    columnCount = count;
+
+    readCekTable(parser, (cekTable) => {
+      cekTableMetadata = cekTable;
+
+      readColumns(parser, options, callback) //TODO: add cekTableMetada in callback
+    })
+  })
 }
 
 export default colMetadataParser;

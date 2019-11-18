@@ -2,44 +2,37 @@ var Connection = require('../lib/tedious').Connection;
 var Request = require('../lib/tedious').Request;
 
 var config = {
-  server: '192.168.1.212',
-  authentication: {
-    type: 'default',
-    options: {
-      userName: 'test',
-      password: 'test'
+  "server": "localhost",
+  "authentication": {
+    "type": "default",
+    "options": {
+      "userName": "sa",
+      "password": "Password_123"
     }
+  },
+  "options": {
+    "port": 60543,
+    "database": "EmpData3"
   }
-  /*
-  ,options: {
-    debug: {
-      packet: true,
-      data: true,
-      payload: true,
-      token: false,
-      log: true
-    },
-    database: 'DBName',
-    encrypt: true // for Azure users
-  }
-  */
+
 };
 
 var connection = new Connection(config);
 
-connection.on('connect', function(err) {
-    // If no error, then good to go...
-    executeStatement();
-  }
+connection.on('connect', function (err) {
+  // If no error, then good to go...
+  executeStatement();
+}
 );
 
-connection.on('debug', function(text) {
-    //console.log(text);
-  }
+connection.on('debug', function (text) {
+  //console.log(text);
+}
 );
 
 function executeStatement() {
-  request = new Request("select 42, 'hello world'", function(err, rowCount) {
+  request = new Request(`
+  SELECT * FROM EmpInfo`, function (err, rowCount) {
     if (err) {
       console.log(err);
     } else {
@@ -49,17 +42,17 @@ function executeStatement() {
     connection.close();
   });
 
-  request.on('row', function(columns) {
-    columns.forEach(function(column) {
+  request.on('row', function (columns) {
+    columns.forEach(function (column) {
       if (column.value === null) {
         console.log('NULL');
       } else {
-        console.log(column.value);
+        console.log(column);
       }
     });
   });
 
-  request.on('done', function(rowCount, more) {
+  request.on('done', function (rowCount, more) {
     console.log(rowCount + ' rows returned');
   });
 

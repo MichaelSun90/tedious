@@ -15,17 +15,21 @@ const FEATURE_ID = {
 
 function featureExtAckParser(parser: Parser, _colMetadata: ColumnMetadata[], _options: InternalConnectionOptions, callback: (token: FeatureExtAckToken) => void) {
   let fedAuth: Buffer | undefined;
+  let colEncryption: Buffer | undefined;
 
   function next() {
     parser.readUInt8((featureId) => {
       if (featureId === FEATURE_ID.TERMINATOR) {
-        return callback(new FeatureExtAckToken(fedAuth));
+        return callback(new FeatureExtAckToken(fedAuth, colEncryption));
       }
 
       parser.readUInt32LE((featureAckDataLen) => {
         parser.readBuffer(featureAckDataLen, (featureData) => {
           if (featureId === FEATURE_ID.FEDAUTH) {
             fedAuth = featureData;
+          }
+          else if(featureId === FEATURE_ID.COLUMNENCRYPTION){
+            colEncryption = featureData;
           }
 
           next();

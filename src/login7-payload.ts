@@ -61,6 +61,11 @@ const FEDAUTH_OPTIONS = {
   ADAL_WORKFLOW_INTEGRATED: 0x02
 };
 
+const COL_ENCRYPTION_OPTIONS = {
+  FEATURE_ID: 0x04,
+  COLUMN_ENCRYPTION_VERSION: 0x01
+}
+
 const FEATURE_EXT_TERMINATOR = 0xFF;
 
 type Options = {
@@ -102,6 +107,7 @@ class Login7Payload {
   changePassword: string | undefined;
 
   fedAuth: { type: 'ADAL', echo: boolean, workflow: 'default' | 'integrated' } | { type: 'SECURITYTOKEN', echo: boolean, fedAuthToken: string } | undefined;
+  colEncryption: boolean | undefined;
 
   constructor({ tdsVersion, packetSize, clientProgVer, clientPid, connectionId, clientTimeZone, clientLcid }: Options) {
     this.tdsVersion = tdsVersion;
@@ -116,6 +122,7 @@ class Login7Payload {
     this.initDbFatal = false;
 
     this.fedAuth = undefined;
+    this.colEncryption = undefined;
 
     this.userName = undefined;
     this.password = undefined;
@@ -383,6 +390,8 @@ class Login7Payload {
     const buffers = [];
 
     const fedAuth = this.fedAuth;
+    const colEncryption = this.colEncryption;
+
     if (fedAuth) {
       switch (fedAuth.type) {
         case 'ADAL':
@@ -412,6 +421,16 @@ class Login7Payload {
     }
 
     buffers.push(Buffer.from([FEATURE_EXT_TERMINATOR]));
+
+    if(colEncryption) {
+      let offset = 0;
+      const buffer = Buffer.alloc(6); //Feature_id = 1 byte, Length (DWORD) = 4 bytes, ColumnEncryptionVersion = 1 byte. 
+
+      buffer.writeUInt8(COL_ENCRYPTION_OPTIONS.FEATURE_ID, offset)
+      //buffer.writeUInt32(length???, offset)
+      buffer.writeUInt8(COL_ENCRYPTION_OPTIONS.COLUMN_ENCRYPTION_VERSION, offset)
+      buffers.push(buffer)
+    }
 
     return Buffer.concat(buffers);
   }
