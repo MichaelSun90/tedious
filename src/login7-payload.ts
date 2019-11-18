@@ -427,7 +427,7 @@ class Login7Payload {
       const buffer = Buffer.alloc(6); //Feature_id = 1 byte, Length (DWORD) = 4 bytes, ColumnEncryptionVersion = 1 byte. 
 
       buffer.writeUInt8(COL_ENCRYPTION_OPTIONS.FEATURE_ID, offset)
-      //buffer.writeUInt32(length???, offset)
+      buffer.writeUInt32LE(1, offset) //length = 1 because the following data only includes column_encryption_version that is only 1 byte long in value. 
       buffer.writeUInt8(COL_ENCRYPTION_OPTIONS.COLUMN_ENCRYPTION_VERSION, offset)
       buffers.push(buffer)
     }
