@@ -128,6 +128,7 @@ interface InternalConnectionConfig {
 export interface InternalConnectionOptions {
   abortTransactionOnError: boolean,
   appName: undefined | string,
+  alwaysEncrypted: boolean | undefined,
   camelCaseColumns: boolean,
   cancelTimeout: number,
   columnNameReplacer: undefined| ((colName: string, index: number, metadata: Metadata) => string),
@@ -209,6 +210,7 @@ interface ConnectionConfiguration {
 interface ConnectionOptions {
   abortTransactionOnError?: boolean,
   appName?: string | undefined,
+  alwaysEncrypted?: boolean | undefined,
   camelCaseColumns?: boolean,
   cancelTimeout?: number,
   columnNameReplacer?: (colName: string, index: number, metadata: Metadata) => string,
@@ -489,6 +491,7 @@ class Connection extends EventEmitter {
       options: {
         abortTransactionOnError: false,
         appName: undefined,
+        alwaysEncrypted: false,
         camelCaseColumns: false,
         cancelTimeout: DEFAULT_CANCEL_TIMEOUT,
         columnNameReplacer: undefined,
@@ -557,6 +560,14 @@ class Connection extends EventEmitter {
         }
 
         this.config.options.appName = config.options.appName;
+      }
+
+      if(config.options.alwaysEncrypted === true) {
+        if (typeof config.options.alwaysEncrypted !== 'boolean') {
+          throw new TypeError('The config.options.alwaysEncrypted must be of type boolean')
+        }
+
+        this.config.options.alwaysEncrypted = config.options.alwaysEncrypted;
       }
 
       if (config.options.camelCaseColumns !== undefined) {
@@ -1589,6 +1600,11 @@ class Connection extends EventEmitter {
       default:
         payload.userName = authentication.options.userName;
         payload.password = authentication.options.password;
+    }
+
+    const { options } = this.config;
+    if(options.alwaysEncrypted) {
+      payload.colEncryption = true;
     }
 
     payload.hostname = os.hostname();
