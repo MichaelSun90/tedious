@@ -101,8 +101,7 @@ function readColumnData(parser: Parser, options: InternalConnectionOptions, inde
   });
 }
 
-function readColumns(parser: Parser,  options: InternalConnectionOptions, callback: (token: ColMetadataToken) => void){
-  parser.readUInt16LE((columnCount) => {
+function readColumns(parser: Parser,  options: InternalConnectionOptions, columnCount: number,  callback: (token: ColMetadataToken) => void){
     const columns: ColumnMetadata[] = [];
 
     let i = 0;
@@ -122,7 +121,6 @@ function readColumns(parser: Parser,  options: InternalConnectionOptions, callba
     next(() => {
       callback(new ColMetadataToken(columns));
     });
-  });
 }
 
 // 2.2.7.4 Token Stream Definition Parser -> 'CekTable'
@@ -142,7 +140,7 @@ function colMetadataParser(parser: Parser, _colMetadata: ColumnMetadata[], optio
     readCekTable(parser, (cekTable) => {
       cekTableMetadata = cekTable;
 
-      readColumns(parser, options, callback) //TODO: add cekTableMetada in callback
+      readColumns(parser, options, columnCount, callback) //TODO: add cekTableMetada in callback
     })
   })
 }
