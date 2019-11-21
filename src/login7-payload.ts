@@ -422,14 +422,13 @@ class Login7Payload {
 
     if(colEncryption) {
       let offset = 0;
-      const buffer = Buffer.from([0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF]); //debug
-      buffers.push(buffer)
-     /*  const buffer = Buffer.alloc(6); //Feature_id = 1 byte, Length (DWORD) = 4 bytes, ColumnEncryptionVersion = 1 byte. 
 
-      buffer.writeUInt8(COL_ENCRYPTION_OPTIONS.FEATURE_ID, offset)
-      buffer.writeUInt32LE(1, offset) //length = 1 because the following data only includes column_encryption_version that is only 1 byte long in value. 
-      buffer.writeUInt8(COL_ENCRYPTION_OPTIONS.COLUMN_ENCRYPTION_VERSION, offset)
-      buffers.push(buffer) */
+      const buffer = Buffer.alloc(6); //Feature_id = 1 byte, Length (DWORD) = 4 bytes, ColumnEncryptionVersion = 1 byte. 
+
+      offset = buffer.writeUInt8(COL_ENCRYPTION_OPTIONS.FEATURE_ID, offset)
+      offset = buffer.writeUInt32LE(1, offset) //length = 1 because the following data only includes column_encryption_version that is only 1 byte long in value. 
+      offset = buffer.writeUInt8(COL_ENCRYPTION_OPTIONS.COLUMN_ENCRYPTION_VERSION, offset)
+      buffers.push(buffer)
     }
 
     buffers.push(Buffer.from([FEATURE_EXT_TERMINATOR]));
