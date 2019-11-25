@@ -125,7 +125,9 @@ function readColumns(parser: Parser,  options: InternalConnectionOptions, column
 
 // 2.2.7.4 Token Stream Definition Parser -> 'CekTable'
 function readCekTable(parser: Parser, callback: (cekTable: CekTableMetadata) => void) {
-  //TODO
+  parser.readUInt16LE((EkValueCount) => {
+    console.log('!! EkValueCount => ', EkValueCount);
+  })
 }
 
 
