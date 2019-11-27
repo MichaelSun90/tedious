@@ -1,89 +1,73 @@
 const { assert } = require('chai');
-const Login7Payload = require('../src/login7-payload');
 const Connection = require('../src/connection');
+const Parser = require('../src/token/stream-parser');
+const fs = require('fs');
+const homedir = require('os').homedir();
 const Request = require('../src/request');
+
+const featureExtAckParser = require('../src/token/feature-ext-ack-parser');
+const sinon = require('sinon');
 
 describe('AE Test', function () {
 
-    let config = {
-        "server": "192.168.226.175",
-        "authentication": {
-            "type": "default",
-            "options": {
-                "userName": "sa",
-                "password": "Moonshine4me"
-            }
-        },
-        "options": {
-            "port": 1433,
-            "database": "TediousDB",
-            "encrypt": false,
-            "alwaysEncrypted": true,
-            "debug": {
-                "packet" : true,
-                "data": true,
-                "payload": true,
-            }
-        }
-    }
+    let config = JSON.parse(
+        fs.readFileSync(homedir + '/.tedious/test-connection-ae.json', 'utf8')
+      ).config;
 
-    it('should connect to TediousDB', function (done) {
+    xit('should connect to TediousDB', function (done) {
         let connection = new Connection(config);
 
         connection.on('connect', (err) => {
-            console.log('connected!!')
             if (err) {
                 console.log('connection error: ', err)
             } else {
                 console.log('connected!')
                 assert.isTrue(false);
-                done();
-            }
 
+            }
             connection.close();
+            done();
         })
 
         connection.on('debug', function (text) {
             console.log(text);
-        }
-        );
-
-        connection.on('infoMessage', function(info){
+        });
+        connection.on('infoMessage', function (info) {
             console.log('state: ', info.state, ' | ', 'message: ', info.message)
         })
     })
 
-    xit('should send COLUMNENCRYPTION in LOGIN7', function (done) {
-        let connection = new Connection(config);
+    xdescribe('LOGIN7 Payload tests', function () {
+        it('should send COLUMNENCRYPTION in LOGIN7', function (done) {
+            const connection = new Connection(config);
+            const payLoad = connection.sendLogin7PacketHelper_setupLogin7Payload();
+            assert.isTrue(payLoad.colEncryption);
+            done();
+        })
+    })
 
-        console.log('new connection established')
+    describe('Feature-ext-ack-parser.ts test', function () {
+        it('should return new FeatureExtAckToken with colEncryption = true', function (done) {
+             const buf = Buffer.alloc(7);
+             let offset = 0;
+             offset = buf.writeUInt8(0x04, offset)
+             offset = buf.writeUInt32LE(1, offset) // length (DWORD)
+             offset = buf.writeUInt8(1, offset) // COLUMNENCRYPTION_VERSION (Byte)
+             buf.writeUInt8(0xFF, offset); // Terminator 
 
-        connection.on('connect', (err) => {
-            if (err) {
-                console.log('connection error: ', err)
-            } else {
-                console.log('connected!');
-            }
+             const parser = new Parser({ token() { } }, {}, {});
+             parser.buffer = buf;
 
-            let request = new Request('SELECT * FROM MyTable', (err, rowCount) => {
-                if (err) {
-                    console.log('Request error: ', err)
-                } else {
-                    connection.close();
-                }
-            })
+             featureExtAckParser(parser, [], [], (token) => {
+                 assert.equal(token.colEncryption[0], 1);
+                 done();
+             })
+        })
+    })
 
-            request.on('row', function (columns) {
-                columns.forEach(function (column) {
-                    if (column.value === null) {
-                        console.log('NULL');
-                    } else {
-                        console.log(column);
-                    }
-                });
-            });
+    xdescribe('Colmetadata-token-parser.ts test', function () {
+        it('should read CEK Table', function () {
 
-            connection.execSql(request);
         })
     })
 })

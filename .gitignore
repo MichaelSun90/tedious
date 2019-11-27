@@ -12,5 +12,3 @@ test/unit/perf-buffer.coffee
 
 src-coffee/
 test-coffee/
-
-test/AE-test.js
