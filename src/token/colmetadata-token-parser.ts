@@ -3,9 +3,12 @@ import metadataParse, { Metadata } from '../metadata-parser';
 import Parser from './stream-parser';
 import { InternalConnectionOptions } from '../connection';
 import { ColMetadataToken } from './token';
+import { TYPE, DataType } from '../data-type';
+
+import { sprintf } from 'sprintf-js';
 
 type CryptoMetaData = {
-  ordinal: any,
+  ordinal: number,
   userType: any,
   baseTypeInfo: any,
   encryptionAlgo: any,
@@ -21,7 +24,7 @@ type CekTableMetadata = {
 export type ColumnMetadata = Metadata & {
   colName: string,
   tableName?: string | string[],
-  cryptoMetaData: CryptoMetaData
+  cryptoMetaData: CryptoMetaData|undefined
 };
 
 function readTableName(parser: Parser, options: InternalConnectionOptions, metadata: Metadata, callback: (tableName?: string | string[]) => void) {
@@ -71,8 +74,55 @@ function readColumnName(parser: Parser, options: InternalConnectionOptions, inde
   });
 }
 
-function readCryptoMetaData(parser: Parser, options: InternalConnectionOptions, index: number, metadata: Metadata, callback: (cryptoMetaData: CryptoMetaData) => void) {
-  //TODO
+function readCryptoMetaData(parser: Parser, options: InternalConnectionOptions, index: number, metadata: Metadata, callback: (cryptoMetaData: CryptoMetaData|undefined) => void) {
+  
+  // Based on the TDS doc, 'fEncrypted' is at 11th bit under flags.
+  // If it is set to '1', means this column is encrypted
+  // If clinet side enable the encrypted feature, and current column is encrypted, then 
+  // program then try to parse CryptoMetaData
+  let flags = metadata.flags.toString(2);
+  let encrypted = flags.charAt(flags.length - 11) == '1'
+  if(options.alwaysEncrypted && encrypted){
+    // Read ordinal as USHORT
+    parser.readUInt16LE((ordinal) => {
+      // Read userType (Changed to ULONG in TDS 7.2):
+      // Depending on the TDS version that is used, valid values are USHORT/ULONG
+      // Do not handle special cases for TIMESTAMP and alias types becasue Tedious 
+      // currently not support this two types
+      (options.tdsVersion < '7_2' ? parser.readUInt16LE : parser.readUInt32LE).call(parser, (userType) => {
+        // Read BaseTypeInfo as TYPE_INFO (UInt8) 
+        parser.readUInt8((typeNumber) => {
+          const type: DataType = TYPE[typeNumber];
+          if (!type) {
+            return parser.emit('error', new Error(sprintf('Unrecognised data type 0x%02X', typeNumber)));
+          }
+          // Read encryptionAlgo as BYTE
+          parser.readUInt8((encryptionAlgo) => {
+            // Read algoName B_VARCHAR
+            parser.readBVarChar((algoName) => {
+              // Read encryptionAlgoType as BYTE
+              parser.readUInt8((encryptionAlgoType) => {
+                // Read normVersion as BYTE
+                parser.readUInt8((normVersion) => {
+                  callback({
+                    ordinal: ordinal,
+                    userType: userType,
+                    baseTypeInfo: type,
+                    encryptionAlgo: encryptionAlgo,
+                    algoName: algoName,
+                    encryptionAlgoType: encryptionAlgoType,
+                    normVersion: normVersion
+                  })
+                })
+              })
+            })
+          })
+        })
+      })
+    })
+  }else{
+    callback( undefined )
+  }  
 }
 
 // 2.2.7.4 Token Stream Definition Parser -> 'ColumnData'
