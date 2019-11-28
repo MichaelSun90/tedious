@@ -2310,12 +2310,12 @@ Connection.prototype.STATE = {
             this.loginError = ConnectionError(`Active Directory authentication acknowledgment for ${authentication.type} authentication method includes extra data`);
             this.loggedIn = false;
           }
-        } else if (token.fedAuth === undefined) {
+        } else if (token.fedAuth === undefined && token.colEncryption === undefined) {
           this.loginError = ConnectionError('Received acknowledgement for unknown feature');
           this.loggedIn = false;
         } else {
-          this.loginError = ConnectionError('Did not request Active Directory authentication, but received the acknowledgment');
-          this.loggedIn = false;
+        /*   this.loginError = ConnectionError('Did not request Active Directory authentication nor Always Encrypted, but received an unknown acknowledgment');
+          this.loggedIn = false; */
         }
       },
       message: function() {
