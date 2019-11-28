@@ -1553,6 +1553,18 @@ class Connection extends EventEmitter {
   }
 
   sendLogin7Packet() {
+    const payload = this.sendLogin7PacketHelper_setupLogin7Payload();
+
+    this.routingData = undefined;
+    this.messageIo.sendMessage(TYPE.LOGIN7, payload.toBuffer());
+
+    this.debug.payload(function() {
+      return payload.toString('  ');
+    });
+  }
+
+  //For testing methods called to Login7Payload
+  sendLogin7PacketHelper_setupLogin7Payload(): Login7Payload {
     const payload = new Login7Payload({
       tdsVersion: versions[this.config.options.tdsVersion],
       packetSize: this.config.options.packetSize,
@@ -1616,12 +1628,7 @@ class Connection extends EventEmitter {
     payload.readOnlyIntent = this.config.options.readOnlyIntent;
     payload.initDbFatal = !this.config.options.fallbackToDefaultDb;
 
-    this.routingData = undefined;
-    this.messageIo.sendMessage(TYPE.LOGIN7, payload.toBuffer());
-
-    this.debug.payload(function() {
-      return payload.toString('  ');
-    });
+    return payload;
   }
 
   sendFedAuthTokenMessage(token: string) {

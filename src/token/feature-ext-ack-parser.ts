@@ -28,7 +28,7 @@ function featureExtAckParser(parser: Parser, _colMetadata: ColumnMetadata[], _op
           if (featureId === FEATURE_ID.FEDAUTH) {
             fedAuth = featureData;
           }
-          else if(featureId === FEATURE_ID.COLUMNENCRYPTION){
+          else if(featureId === FEATURE_ID.COLUMNENCRYPTION) {
             colEncryption = featureData;
           }
 

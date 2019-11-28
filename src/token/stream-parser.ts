@@ -111,11 +111,14 @@ class Parser extends Transform {
       this.position += 1;
 
       if (tokenParsers[type]) {
+        console.log('-- stream-parser (tokenParser) => ', tokenParsers[type])
         tokenParsers[type](this, this.colMetadata, this.options, doneParsing);
       } else {
         this.emit('error', new Error('Unknown type: ' + type));
       }
     }
+
+    console.log('done parsing tokens')
   }
 
   suspend(next: () => void) {
