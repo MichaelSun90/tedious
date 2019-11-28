@@ -11,7 +11,7 @@ const sinon = require('sinon');
 describe('AE Test', function () {
     let config = JSON.parse(fs.readFileSync(homedir + '/.tedious/test-connection-ae.json', 'utf8')).config;
 
-    it('should connect to TediousDB', function (done) {
+    xit('should connect to TediousDB', function (done) {
         let connection = new Connection(config);
 
         connection.on('connect', (err) => {
@@ -33,7 +33,7 @@ describe('AE Test', function () {
         })
     })
 
-    describe('LOGIN7 Payload tests', function () {
+    xdescribe('LOGIN7 Payload tests', function () {
         it('should send COLUMNENCRYPTION in LOGIN7', function (done) {
             const connection = new Connection(config);
             const payLoad = connection.sendLogin7PacketHelper_setupLogin7Payload();
@@ -42,7 +42,7 @@ describe('AE Test', function () {
         })
     })
 
-    describe('Feature-ext-ack-parser.ts test', function () {
+    xdescribe('Feature-ext-ack-parser.ts test', function () {
         it('should return new FeatureExtAckToken with correct colEncryption feature data', function (done) {
             const buf = Buffer.alloc(7); // mimics expected featureextack response from server
             let offset = 0;
@@ -61,8 +61,20 @@ describe('AE Test', function () {
         })
     })
 
-    xdescribe('Colmetadata-token-parser.ts test', function () {
+    describe('Colmetadata-token-parser.ts test', function () {
         it('should read CEK Table', function () {
+            let connection = new Connection(config);
+
+            connection.on('connect', (err) => {
+                if (err) {
+                    console.log('connection error: ', err)
+                } else {
+                    console.log('connected!')
+                    assert.isUndefined(err);
+                }
+                connection.close();
+                done();
+            })
 
         })
     })

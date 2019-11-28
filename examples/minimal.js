@@ -1,21 +1,8 @@
 var Connection = require('../lib/tedious').Connection;
 var Request = require('../lib/tedious').Request;
+var fs = require('fs');
 
-var config = {
-  "server": "192.168.226.175",
-  "authentication": {
-      "type": "default",
-      "options": {
-          "userName": "sa",
-          "password": "Moonshine4me"
-      }
-  },
-  "options": {
-      "port": 1433,
-      "database": "TediousDB",
-      "encrypt": false,
-  }
-}
+var config = JSON.parse(fs.readFileSync(require('os').homedir()+ '/.tedious/test-connection.json', 'utf8')).config;
 
 var connection = new Connection(config);
 
