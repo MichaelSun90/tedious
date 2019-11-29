@@ -770,8 +770,6 @@ class Connection extends EventEmitter {
         }
 
         this.config.options.encrypt = config.options.encrypt;
-      } else {
-        this.config.options.encrypt = true;
       }
 
       if (config.options.fallbackToDefaultDb !== undefined) {
