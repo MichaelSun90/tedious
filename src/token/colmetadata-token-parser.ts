@@ -95,10 +95,16 @@ function readCryptoMetaData(parser: Parser, options: InternalConnectionOptions, 
 
   // Based on the TDS doc, 'fEncrypted' is at 11th bit under flags.
   // If it is set to '1', means this column is encrypted
-  // If clinet side enable the encrypted feature, and current column is encrypted, then 
+  // If client side enable the encrypted feature, and current column is encrypted, then 
   // program then try to parse CryptoMetaData
   let flags = metadata.flags.toString(2);
-  let encrypted = flags.charAt(flags.length - 11) == '1'
+  let encrypted;
+
+  if(flags.length >= 12) {
+    // get the 11th position (from right to left)
+    encrypted = flags.charAt(flags.length - 12) === "1";
+  }
+
   if (options.alwaysEncrypted && encrypted) {
     // Read ordinal as USHORT
     parser.readUInt16LE((ordinal) => {
