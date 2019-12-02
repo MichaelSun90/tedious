@@ -62,20 +62,46 @@ describe('AE Test', function () {
     })
 
     describe('Colmetadata-token-parser.ts test', function () {
-        it('should read CEK Table', function () {
+        it('should read CEK Table', function (done) {
             let connection = new Connection(config);
 
             connection.on('connect', (err) => {
                 if (err) {
                     console.log('connection error: ', err)
+                    connection.close();
+                    done();
                 } else {
-                    console.log('connected!')
-                    assert.isUndefined(err);
+                    sendQuery(connection);
                 }
-                connection.close();
-                done();
             })
 
+            function sendQuery(connection) {
+                console.log('sending query')
+                let request = new Request('SELECT * FROM MyTable', (err, rowCount) => {
+                    if (err) {
+                        console.log('Request err: ', err);
+                    } else {
+                        assert.isTrue(false);
+                        connection.close();
+                        done();
+                    }
+                })
+
+                let row = 1;
+                request.on('row', function (columns) {
+                    console.log('row: ', row)
+                    columns.forEach(function (column) {
+                        if (column.value === null) {
+                            console.log('NULL');
+                        } else {
+                            console.log(column);
+                        }
+                    });
+                    row += 1;
+                });
+
+                connection.execSql(request);
+            }
         })
     })
 })

@@ -1,5 +1,5 @@
 import { Metadata } from '../metadata-parser';
-import { ColumnMetadata } from './colmetadata-token-parser';
+import { ColumnMetadata, CekTableMetadata } from './colmetadata-token-parser';
 
 export const TYPE = {
   ALTMETADATA: 0x88,
@@ -36,11 +36,13 @@ export abstract class Token {
 }
 
 export class ColMetadataToken extends Token {
+  cekTable: CekTableMetadata;
   columns: ColumnMetadata[]
 
-  constructor(columns: ColumnMetadata[]) {
+  constructor(cekTable: CekTableMetadata, columns: ColumnMetadata[]) {
     super('COLMETADATA', 'columnMetadata');
-
+    
+    this.cekTable = cekTable;
     this.columns = columns;
   }
 }

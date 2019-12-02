@@ -2311,9 +2311,6 @@ Connection.prototype.STATE = {
         } else if (token.fedAuth === undefined && token.colEncryption === undefined) {
           this.loginError = ConnectionError('Received acknowledgement for unknown feature');
           this.loggedIn = false;
-        } else {
-        /*   this.loginError = ConnectionError('Did not request Active Directory authentication nor Always Encrypted, but received an unknown acknowledgment');
-          this.loggedIn = false; */
         }
       },
       message: function() {
