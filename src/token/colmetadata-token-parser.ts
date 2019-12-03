@@ -91,7 +91,7 @@ function readColumnName(parser: Parser, options: InternalConnectionOptions, inde
   });
 }
 
-function readCryptoMetaData(parser: Parser, options: InternalConnectionOptions, index: number, metadata: Metadata, callback: (cryptoMetaData: CryptoMetaData | undefined) => void) {
+function readCryptoMetaData(parser: Parser, options: InternalConnectionOptions, metadata: Metadata, callback: (cryptoMetaData: CryptoMetaData | undefined) => void) {
 
   // Based on the TDS doc, 'fEncrypted' is at 11th bit under flags.
   // If it is set to '1', means this column is encrypted
@@ -121,8 +121,7 @@ function readCryptoMetaData(parser: Parser, options: InternalConnectionOptions, 
           }
           // Read encryptionAlgo as BYTE
           parser.readUInt8((encryptionAlgo) => {
-            // Read algoName B_VARCHAR
-            parser.readBVarChar((algoName) => {
+            const next=(algoName:string)=>{
               // Read encryptionAlgoType as BYTE
               parser.readUInt8((encryptionAlgoType) => {
                 // Read normVersion as BYTE
@@ -138,7 +137,20 @@ function readCryptoMetaData(parser: Parser, options: InternalConnectionOptions, 
                   })
                 })
               })
-            })
+            }
+            // if the encryptionAlgo(algorithm id):
+            // equal to 0: means this encryption uses a customized encryption algorithm
+            // not equal to 0: means this encryption uses AEAD_AES_256_CBC_HMAC_SHA512 as the encryption algorithm
+            if(encryptionAlgo === 0)
+            {
+              // Read algoName B_VARCHAR
+              parser.readBVarChar((algoName) => {
+                next(algoName)
+              })
+            }
+            else{
+              next('undefined')
+            }
           })
         })
       })
@@ -152,7 +164,7 @@ function readCryptoMetaData(parser: Parser, options: InternalConnectionOptions, 
 function readColumnData(parser: Parser, options: InternalConnectionOptions, index: number, callback: (column: ColumnMetadata) => void) {
   metadataParse(parser, options, (metadata) => {
     readTableName(parser, options, metadata, (tableName) => {
-      readCryptoMetaData(parser, options, index, metadata, (cryptoMetaData) => {
+      readCryptoMetaData(parser, options, metadata, (cryptoMetaData) => {
         readColumnName(parser, options, index, metadata, (colName) => {
           callback({
             userType: metadata.userType,
